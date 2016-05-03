@@ -4,17 +4,19 @@ module JsonDiff
     path = opts[:path] || '/'
     include_addition = (opts[:additions] == nil) ? true : opts[:additions]
     include_moves = (opts[:moves] == nil) ? true : opts[:moves]
+    include_was = (opts[:include_was] == nil) ? false : opts[:include_was]
+    original_indices = (opts[:original_indices] == nil) ? false : opts[:original_indices]
 
     changes = []
 
     if before.is_a?(Hash)
       if !after.is_a?(Hash)
-        changes << replace(path, before, after)
+        changes << replace(path, include_was ? before : nil, after)
       else
         lost = before.keys - after.keys
         lost.each do |key|
           inner_path = extend_json_pointer(path, key)
-          changes << remove(inner_path, before[key])
+          changes << remove(inner_path, include_was ? before[key] : nil)
         end
 
         if include_addition
@@ -33,7 +35,7 @@ module JsonDiff
       end
     elsif before.is_a?(Array)
       if !after.is_a?(Array)
-        changes << replace(path, before, after)
+        changes << replace(path, include_was ? before : nil, after)
       elsif before.size == 0
         if include_addition
           after.each_with_index do |item, index|
@@ -45,7 +47,7 @@ module JsonDiff
         before.each do |item|
           # Delete elements from the start.
           inner_path = extend_json_pointer(path, 0)
-          changes << remove(inner_path, item)
+          changes << remove(inner_path, include_was ? item : nil)
         end
       else
         pairing = array_pairing(before, after)
@@ -63,22 +65,31 @@ module JsonDiff
           kept
         end
 
-        array_changes(pairing)
+        pairing[:pairs].each do |pair|
+          before_index, after_index = pair
+          inner_path = extend_json_pointer(path, before_index)
+          changes += diff(before[before_index], after[after_index], opts.merge(path: inner_path))
+        end
+
+        if !original_indices
+          # Recompute indices to account for offsets from insertions and
+          # deletions.
+          pairing = array_changes(pairing)
+        end
 
         pairing[:removed].each do |before_index|
           inner_path = extend_json_pointer(path, before_index)
-          changes << remove(inner_path, before[before_index])
+          changes << remove(inner_path, include_was ? before[before_index] : nil)
         end
 
         pairing[:pairs].each do |pair|
-          before_index, after_index, orig_before, orig_after = pair
+          before_index, after_index = pair
           inner_before_path = extend_json_pointer(path, before_index)
           inner_after_path = extend_json_pointer(path, after_index)
 
           if before_index != after_index && include_moves
             changes << move(inner_before_path, inner_after_path)
           end
-          changes += diff(before[orig_before], after[orig_after], opts.merge(path: inner_after_path))
         end
 
         if include_addition
@@ -90,7 +101,7 @@ module JsonDiff
       end
     else
       if before != after
-        changes << replace(path, before, after)
+        changes << replace(path, include_was ? before : nil, after)
       end
     end
 
@@ -168,7 +179,8 @@ module JsonDiff
     }
   end
 
-  # Compute an arbitrary notion of how probable it is that
+  # Compute an arbitrary notion of how probable it is that one object is the
+  # result of modifying the other.
   def self.similarity(before, after)
     return 0.0 if before.class != after.class
 
@@ -189,6 +201,11 @@ module JsonDiff
       before.each do |before_key, before_item|
         similarities << similarity(before_item, after[before_key])
       end
+      # Also consider keys' names.
+      before_keys = before.keys
+      after_keys = after.keys
+      key_similarity = (before_keys & after_keys).size / (before_keys | after_keys).size
+      similarities << key_similarity
 
       similarities.reduce(:+) / similarities.size
     elsif before.is_a?(Array)

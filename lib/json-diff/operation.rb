@@ -24,24 +24,28 @@ module JsonDiff
     end
   end
 
+  def self.replace(path, before, after)
+    if before != nil
+      {'op' => 'replace', 'path' => path, 'was' => before, 'value' => after}
+    else
+      {'op' => 'replace', 'path' => path, 'value' => after}
+    end
+  end
+
   def self.add(path, value)
-    {op: :add, path: path, value: value}
+    {'op' => 'add', 'path' => path, 'value' => value}
   end
 
   def self.remove(path, value)
     if value != nil
-      {op: :remove, path: path, value: value}
+      {'op' => 'remove', 'path' => path, 'was' => value}
     else
-      {op: :remove, path: path}
+      {'op' => 'remove', 'path' => path}
     end
   end
 
-  def self.replace(path, value)
-    {op: :replace, path: path, value: value}
-  end
-
   def self.move(source, target)
-    {op: :move, from: source, path: target}
+    {'op' => 'move', 'from' => source, 'path' => target}
   end
 
 end

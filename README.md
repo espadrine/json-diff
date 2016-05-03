@@ -17,6 +17,15 @@ Outputs [RFC6902][]. Look at [hana][] for a JSON patch algorithm that can use th
 [RFC6902]: http://www.rfc-editor.org/rfc/rfc6902.txt
 [hana]: https://github.com/tenderlove/hana
 
+# Options
+
+- `include_was`: include a `was` field in remove and replace operations, to show the old value. Allows computing reverse operations without the source JSON.
+- `moves`\*: include move operations. Set it to false to remove clutter.
+- `additions`\*: include add operations. Se it to false to remove clutter.
+- `original_indices`\*: array indices are those from the source array (for `from` fields, or `path` fields on remove operations) or the target array (for other `path` fields). It eases manual checking of differences.
+
+\* Changing this option prevents the use of the output for JSON patching.
+
 # Heart
 
 - Recursive similarity computation between any two Ruby values.
@@ -33,6 +42,51 @@ Cons:
 
 - This approach's quality is heavily reliant on how good the similarity algorithm is. Empirically, it yields sensible output. It can be improved by a user-defined procedure.
 - There is a computational overhead to the default similarity computation that scales with the total number of entities in the structure.
+
+# Comparisons
+
+[HashDiff](https://github.com/liufengyun/hashdiff) — LCS, no move operation.
+
+```ruby
+require "json-diff"
+JsonDiff.diff([1, 2, 3, 4, 5], [6, 4, 3, 2])
+# [{'op' => 'remove', 'path' => '/4'},
+#  {'op' => 'remove', 'path' => '/0'},
+#  {'op' => 'move', 'from' => '/0', 'path' => '/2'},
+#  {'op' => 'move', 'from' => '/1', 'path' => '/0'},
+#  {'op' => 'add', 'path' => '/0', 'value' => 6}]
+
+require "hashdiff"
+HashDiff.diff([1, 2, 3, 4, 5], [6, 4, 3, 2])
+# [["-", "[0]", 1],
+#  ["+", "[0]", 6],
+#  ["+", "[1]", 4],
+#  ["+", "[2]", 3],
+#  ["-", "[6]", 5],
+#  ["-", "[5]", 4],
+#  ["-", "[4]", 3]]
+```
+
+[jsondiff](https://github.com/francois2metz/jsondiff) — no similitude, no LCS.
+
+```ruby
+require "json-diff"
+JsonDiff.diff(
+  [{'code' => "ABW", 'name' => "Abbey Wood"}, {'code' => "KGX", 'name' => "Kings Cross"}],
+  [{'code' => "KGX", 'name' => "Kings Cross"}, {'code' => "ABW", 'name' => "Abbey Wood"}]
+)
+# [{'op' => 'move', 'from' => '/0', 'path' => '/1'}]
+
+require "jsondiff"
+JsonDiff.generate(
+  [{'code' => "ABW", 'name' => "Abbey Wood"}, {'code' => "KGX", 'name' => "Kings Cross"}],
+  [{'code' => "KGX", 'name' => "Kings Cross"}, {'code' => "ABW", 'name' => "Abbey Wood"}]
+)
+# [{:op => :replace, :path => '/0/code', :value => 'KGX'},
+#  {:op => :replace, :path => '/0/name', :value => 'Kings Cross'},
+#  {:op => :replace, :path => '/1/code', :value => 'ABW'},
+#  {:op => :replace, :path => '/1/name', :value => 'Abbey Wood'}]
+```
 
 # Plans & Bugs
 
