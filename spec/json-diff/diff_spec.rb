@@ -62,8 +62,8 @@ describe JsonDiff do
     expect(diff).to eql([
       {'op' => 'replace', 'path' => "/2/pillar", 'was' => 0, 'value' => 1},
       {'op' => 'remove', 'path' => "/0", 'was' => "laundry"},
-      {'op' => 'move', 'from' => "/2", 'path' => "/0"},
-      {'op' => 'move', 'from' => "/1", 'path' => "/2"},
+      {'op' => 'move', 'from' => "/0", 'path' => "/2"},
+      {'op' => 'move', 'from' => "/1", 'path' => "/0"},
       {'op' => 'add', 'path' => "/2", 'value' => 3},
     ])
   end
