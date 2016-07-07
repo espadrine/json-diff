@@ -50,7 +50,7 @@ module JsonDiff
           changes << remove(inner_path, include_was ? item : nil)
         end
       else
-        pairing = array_pairing(before, after)
+        pairing = array_pairing(before, after, opts)
         # FIXME: detect replacements.
 
         # All detected moves that do not reach the similarity limit are deleted
@@ -111,11 +111,15 @@ module JsonDiff
   # {pairs: [[before index, after index, similarity]],
   #  removed: [before index],
   #  added: [after index]}
-  def self.array_pairing(before, after)
+  #
+  # - options[:similarity]: procedure taking (before, after) objects.
+  #   Returns a probability between 0 and 1 of how likely `after` is a
+  #   modification of `before`, or nil if it cannot determine it.
+  def self.array_pairing(before, after, options)
     # Array containing the array of similarities from before to after.
     similarities = before.map do |before_item|
       after.map do |after_item|
-        similarity(before_item, after_item)
+        similarity(before_item, after_item, options)
       end
     end
 
@@ -181,10 +185,18 @@ module JsonDiff
 
   # Compute an arbitrary notion of how probable it is that one object is the
   # result of modifying the other.
-  def self.similarity(before, after)
+  #
+  # - options[:similarity]: procedure taking (before, after) objects.
+  #   Returns a probability between 0 and 1 of how likely `after` is a
+  #   modification of `before`, or nil if it cannot determine it.
+  def self.similarity(before, after, options)
     return 0.0 if before.class != after.class
 
-    # FIXME: call custom similarity procedure.
+    # Use the custom similarity procedure if it isn't nil.
+    if options[:similarity] != nil
+      custom_result = options[:similarity].call(before, after)
+      return custom_result if custom_result != nil
+    end
 
     if before.is_a?(Hash)
       if before.size == 0
@@ -199,7 +211,7 @@ module JsonDiff
       # We don't consider key renames.
       similarities = []
       before.each do |before_key, before_item|
-        similarities << similarity(before_item, after[before_key])
+        similarities << similarity(before_item, after[before_key], options)
       end
       # Also consider keys' names.
       before_keys = before.keys
@@ -216,7 +228,7 @@ module JsonDiff
       # similarity between each elements of the list.
       similarities = before.map do |before_item|
         after.map do |after_item|
-          similarity(before_item, after_item)
+          similarity(before_item, after_item, options)
         end.max || 0.0
       end
 

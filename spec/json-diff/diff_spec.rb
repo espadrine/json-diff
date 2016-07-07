@@ -116,4 +116,35 @@ describe JsonDiff do
     ])
   end
 
+  it "should be able to diff two objects with a custom similarity" do
+    similarity = -> (before, after) do
+      if before.is_a?(Hash) && after.is_a?(Hash)
+        if before[:id] == after[:id]
+          1.0
+        else
+          0.0
+        end
+      end
+    end
+
+    diff = JsonDiff.diff([
+      {id: 1, we: "must", start: "somewhere"},
+      {id: 2, and: "this", will: "do"},
+    ], [
+      {id: 2, insert: "something", completely: "different"},
+      {id: 1, this: "too", is: "different"},
+    ], similarity: similarity)
+    expect(diff).to eql([
+      {'op' => 'remove', 'path' => '/0/we'},
+      {'op' => 'remove', 'path' => '/0/start'},
+      {'op' => 'add', 'path' => '/0/this', 'value' => 'too'},
+      {'op' => 'add', 'path' => '/0/is', 'value' => 'different'},
+      {'op' => 'remove', 'path' => '/1/and'},
+      {'op' => 'remove', 'path' => '/1/will'},
+      {'op' => 'add', 'path' => '/1/insert', 'value' => 'something'},
+      {'op' => 'add', 'path' => '/1/completely', 'value' => 'different'},
+      {'op' => 'move', 'from' => '/0', 'path' => '/1'},
+    ])
+  end
+
 end
