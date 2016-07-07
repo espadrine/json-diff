@@ -95,6 +95,8 @@ Roughly ordered by priority.
 
 - Support LCS as an option. (The default will remain what yields the best results, regardless of the time it takes.)
 - Support specifying a depth for similarity computation.
+- Character-wise substring add and remove operations.
+- SVG output.
 
 ---
 
