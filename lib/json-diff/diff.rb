@@ -1,7 +1,7 @@
 module JsonDiff
 
   def self.diff(before, after, opts = {})
-    path = opts[:path] || '/'
+    path = opts[:path] || ''
     include_addition = (opts[:additions] == nil) ? true : opts[:additions]
     include_moves = (opts[:moves] == nil) ? true : opts[:moves]
     include_was = (opts[:include_was] == nil) ? false : opts[:include_was]

@@ -3,6 +3,8 @@ module JsonDiff
   # Convert a list of strings or numbers to an RFC6901 JSON pointer.
   # http://tools.ietf.org/html/rfc6901
   def self.json_pointer(path)
+    return "" if path == []
+
     escaped_path = path.map do |key|
       if key.is_a?(String)
         key.gsub('~', '~0')
@@ -17,7 +19,7 @@ module JsonDiff
 
   # Add a key to a JSON pointer.
   def self.extend_json_pointer(pointer, key)
-    if pointer == '/'
+    if pointer == ''
       json_pointer([key])
     else
       pointer + json_pointer([key])

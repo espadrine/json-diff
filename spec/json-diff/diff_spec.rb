@@ -84,6 +84,15 @@ describe JsonDiff do
     ])
   end
 
+  # Trans-type
+
+  it "should be able to diff two objects of mixed type" do
+    diff = JsonDiff.diff(0, "0", include_was: true)
+    expect(diff).to eql([
+      {'op' => 'replace', 'path' => '', 'was' => 0, 'value' => "0"}
+    ])
+  end
+
   # Options
 
   it "should be able to diff two integer arrays with original indices" do

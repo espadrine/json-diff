@@ -3,7 +3,7 @@ require 'spec_helper'
 describe JsonDiff do
   it "should convert the root to a JSON pointer" do
     json_pointer = JsonDiff.json_pointer([])
-    expect(json_pointer).to eql("/")
+    expect(json_pointer).to eql("")
   end
 
   it "should convert a path to a JSON pointer" do
