@@ -311,15 +311,10 @@ module JsonDiff
       while i < len
         ni = (i + 1) % len  # next i
         if ring[i] != ring[ni]
-          pairs << [ring[i], ring[ni], orig_ring[i][0], orig_ring[ni][1]]
+          pairs << [ring_map.map(ring[i]), ring[ni], orig_ring[i][0], orig_ring[ni][1]]
         end
         ring_map.removal(ring[i])
         ring_map.addition(ring[ni])
-        j = i + 1
-        while j < len
-          ring[j] = ring_map.map(ring[j])
-          j += 1
-        end
         i += 1
       end
     end

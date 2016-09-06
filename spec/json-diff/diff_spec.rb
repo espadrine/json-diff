@@ -57,6 +57,20 @@ describe JsonDiff do
     ])
   end
 
+  it "should be able to diff a ring switch" do
+    diff = JsonDiff.diff([1, 2, 3], [2, 3, 1], include_was: true)
+    expect(diff).to eql([{"op" => "move", "from" => "/0", "path" => "/2"}])
+  end
+
+  it "should be able to diff a ring switch with removals and additions" do
+    diff = JsonDiff.diff([1, 2, 3, 4], [5, 3, 4, 2], include_was: true)
+    expect(diff).to eql([
+      {"op" => "remove", "path" => "/0", "was" => 1},
+      {"op" => "move", "from" => "/0", "path" => "/2"},
+      {"op" => "add", "path" => "/0", "value" => 5},
+    ])
+  end
+
   it "should be able to diff two arrays with mixed content" do
     diff = JsonDiff.diff(["laundry", 12, {'pillar' => 0}, true], [true, {'pillar' => 1}, 3, 12], include_was: true)
     expect(diff).to eql([
