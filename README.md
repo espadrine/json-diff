@@ -9,7 +9,7 @@ gem install json-diff  # Or `gem 'json-diff'` in your Gemfile.
 ```ruby
 require 'json-diff'
 JsonDiff.diff(1, 2)
-#> [{:op => :replace, :path => "", :value => 2}]
+#> [{'op' => 'replace', 'path' => '', 'value' => 2}]
 ```
 
 Outputs [RFC6902][]. Look at [hana][] for a JSON patch algorithm that can use this output.
