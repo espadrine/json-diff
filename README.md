@@ -21,11 +21,18 @@ Outputs [RFC6902][]. Look at [hana][] for a JSON patch algorithm that can use th
 
 - `include_was`: include a `was` field in remove and replace operations, to show the old value. Allows computing reverse operations without the source JSON.
 - `moves`\*: include move operations. Set it to false to remove clutter.
-- `additions`\*: include add operations. Se it to false to remove clutter.
+- `additions`\*: include add operations. Set it to false to remove clutter.
 - `original_indices`\*: array indices are those from the source array (for `from` fields, or `path` fields on remove operations) or the target array (for other `path` fields). It eases manual checking of differences.
 - `similarity`: procedure taking (before, after) objects. Returns a probability between 0 and 1 of how likely `after` is a modification of `before`, or nil if you wish to fall back to the default computation.
 
 \* Changing this option prevents the use of the output for JSON patching.
+
+You can also install its associated program to use this on the command line:
+
+```bash
+gem install json-diff  # On Linux, you may need to use sudo
+json-diff before.json after.json
+```
 
 # Heart
 

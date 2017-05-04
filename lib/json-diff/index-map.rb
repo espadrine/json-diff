@@ -25,7 +25,9 @@ module JsonDiff
     def initialize(pivot)
       @pivot = pivot
     end
+  end
 
+  class AdditionIndexMap < IndexMap
     def map(index)
       if index >= @pivot
         index + 1
@@ -33,9 +35,6 @@ module JsonDiff
         index
       end
     end
-  end
-
-  class AdditionIndexMap < IndexMap
   end
 
   class RemovalIndexMap < IndexMap
