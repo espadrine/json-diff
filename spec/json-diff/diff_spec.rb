@@ -71,6 +71,15 @@ describe JsonDiff do
     ])
   end
 
+  it "should be able to diff an array with many additions at its start" do
+    diff = JsonDiff.diff([0], [1, 2, 3, 0])
+    expect(diff).to eql([
+      {'op' => 'add', 'path' => "/0", 'value' => 1},
+      {'op' => 'add', 'path' => "/1", 'value' => 2},
+      {'op' => 'add', 'path' => "/2", 'value' => 3},
+    ])
+  end
+
   it "should be able to diff two arrays with mixed content" do
     diff = JsonDiff.diff(["laundry", 12, {'pillar' => 0}, true], [true, {'pillar' => 1}, 3, 12], include_was: true)
     expect(diff).to eql([

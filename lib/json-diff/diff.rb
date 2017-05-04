@@ -262,7 +262,7 @@ module JsonDiff
     # And map indices from after to before additions
     # (removals, since it is reversed).
     addition_map = IndexMaps.new
-    pairing[:added].each { |ad| addition_map.removal(ad) }
+    pairing[:added].reverse.each { |ad| addition_map.removal(ad) }
 
     moves = {}
     orig_before = {}
