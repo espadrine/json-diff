@@ -11,10 +11,10 @@ module JsonDiff
       lost = before.keys - after.keys
       lost.each do |key|
         inner_path = extend_json_pointer(path, key)
-        changes << remove(inner_path, include_was ? before[key] : nil)
+        changes << remove(inner_path, include_was(path) ? before[key] : nil)
       end
 
-      if include_addition
+      if include_addition(:hash, path)
         gained = after.keys - before.keys
         gained.each do |key|
           inner_path = extend_json_pointer(path, key)
@@ -31,7 +31,7 @@ module JsonDiff
 
     def diff_array(before, after, path)
       if before.size == 0
-        if include_addition
+        if include_addition(:array, path)
           after.each_with_index do |item, index|
             inner_path = extend_json_pointer(path, index)
             changes << add(inner_path, item)
@@ -41,7 +41,7 @@ module JsonDiff
         before.each do |item|
           # Delete elements from the start.
           inner_path = extend_json_pointer(path, 0)
-          changes << remove(inner_path, include_was ? item : nil)
+          changes << remove(inner_path, include_was(path) ? item : nil)
         end
       else
         pairing = array_pairing(before, after, opts)
@@ -65,7 +65,7 @@ module JsonDiff
           diff(before[before_index], after[after_index], inner_path)
         end
 
-        if !original_indices
+        if !original_indices(path)
           # Recompute indices to account for offsets from insertions and
           # deletions.
           pairing = array_changes(pairing)
@@ -73,7 +73,7 @@ module JsonDiff
 
         pairing[:removed].each do |before_index|
           inner_path = extend_json_pointer(path, before_index)
-          changes << remove(inner_path, include_was ? before[before_index] : nil)
+          changes << remove(inner_path, include_was(path) ? before[before_index] : nil)
         end
 
         pairing[:pairs].each do |pair|
@@ -81,12 +81,12 @@ module JsonDiff
           inner_before_path = extend_json_pointer(path, before_index)
           inner_after_path = extend_json_pointer(path, after_index)
 
-          if before_index != after_index && include_moves
+          if before_index != after_index && include_moves(path)
             changes << move(inner_before_path, inner_after_path)
           end
         end
 
-        if include_addition
+        if include_addition(:array, path)
           pairing[:added].each do |after_index|
             inner_path = extend_json_pointer(path, after_index)
             changes << add(inner_path, after[after_index])
@@ -98,40 +98,42 @@ module JsonDiff
     def diff(before, after, path = '')
       if before.is_a?(Hash)
         if !after.is_a?(Hash)
-          changes << replace(path, include_was ? before : nil, after)
+          changes << replace(path, include_was(path) ? before : nil, after)
         else
           diff_hash(before, after, path)
         end
       elsif before.is_a?(Array)
         if !after.is_a?(Array)
-          changes << replace(path, include_was ? before : nil, after)
+          changes << replace(path, include_was(path) ? before : nil, after)
         else
           diff_array(before, after, path)
         end
       else
         if before != after
-          changes << replace(path, include_was ? before : nil, after)
+          changes << replace(path, include_was(path) ? before : nil, after)
         end
       end
-
     end
 
-    def include_addition
-      (opts[:additions] == nil) ? true : opts[:additions]
+    def include_addition(type, path)
+      return true if opts[:additions] == nil
+      opts[:additions].respond_to?(:call) ? opts[:additions].call(type, path) : opts[:additions]
     end
 
-    def include_moves
-      (opts[:moves] == nil) ? true : opts[:moves]
+    def include_moves(path)
+      return true if opts[:moves] == nil
+      opts[:moves].respond_to?(:call) ? opts[:moves].call(path) : opts[:moves]
     end
 
-    def include_was
-      (opts[:include_was] == nil) ? false : opts[:include_was]
+    def include_was(path)
+      return true if opts[:include_was] == nil
+      opts[:include_was].respond_to?(:call) ? opts[:include_was].call(path) : opts[:include_was]
     end
 
-    def original_indices
-      (opts[:original_indices] == nil) ? false : opts[:original_indices]
+    def original_indices(path)
+      return true if opts[:original_indices] == nil
+      opts[:original_indices].respond_to?(:call) ? opts[:original_indices].call(path) : opts[:original_indices]
     end
-
   end
 
   # {pairs: [[before index, after index, similarity]],
