@@ -1,6 +1,6 @@
 require 'spec_helper'
 
-describe JsonDiff do
+describe JsonDiff::V2 do
   # Arrays
 
   it "should be able to diff two empty arrays" do
