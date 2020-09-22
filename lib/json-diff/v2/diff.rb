@@ -104,19 +104,19 @@ module JsonDiff
     def diff(before, after, path = '')
       if before.is_a?(Hash)
         if !after.is_a?(Hash)
-          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after)
+          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after) if include_replace(path)
         else
           diff_hash(before, after, path)
         end
       elsif before.is_a?(Array)
         if !after.is_a?(Array)
-          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after)
+          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after) if include_replace(path)
         else
           diff_array(before, after, path)
         end
       else
         if before != after
-          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after)
+          changes << JsonDiff.replace(path, include_was(path) ? before : nil, after) if include_replace(path)
         end
       end
     end
@@ -131,6 +131,11 @@ module JsonDiff
       opts[:moves].respond_to?(:call) ? opts[:moves].call(path) : opts[:moves]
     end
 
+    def include_replace(path)
+      return true if opts[:replace] == nil
+      opts[:replace].respond_to?(:call) ? opts[:replace].call(path) : opts[:replace]
+    end
+
     def include_was(path)
       return false if opts[:include_was] == nil
       opts[:include_was].respond_to?(:call) ? opts[:include_was].call(path) : opts[:include_was]
@@ -142,3 +147,4 @@ module JsonDiff
     end
   end
 end
+
